@@ -49,16 +49,16 @@ export default function ResultsPage() {
   let color = ""
 
   if (percentage >= 90) {
-    message = "Excellent! You're a vocabulary master!"
+    message = "สุดยอด! ยังกับผู้เชี่ยวชาญ!"
     color = "text-green-500"
   } else if (percentage >= 70) {
-    message = "Great job! You're doing well!"
+    message = "ดีมาก! แต่โทษทีฉันดีกว่า"
     color = "text-emerald-500"
   } else if (percentage >= 50) {
-    message = "Good effort! Keep practicing!"
+    message = "ดี! แต่ยังมีที่ต้องปรับปรุง"
     color = "text-amber-500"
   } else {
-    message = "Keep studying! You'll improve with practice."
+    message = "อ่อนหัดไอน้อง! ต้องฝึกอีกเยอะ"
     color = "text-red-500"
   }
 
@@ -137,18 +137,18 @@ export default function ResultsPage() {
                         </div>
                         <div className="flex-1">
                           <h4 className="font-medium">
-                            Question {index + 1}: <span>{question.word}</span>
+                            คำถามที่ {index + 1}: <span>{question.word}</span>
                             <span className="text-muted-foreground ml-2">({question.partOfSpeech})</span>
                           </h4>
                           
                           <div className="mt-2 space-y-1">
                             {!isCorrect && (
                               <p className="text-sm">
-                                Your answer: <span className="text-red-500 font-medium">{question.userAnswer}</span>
+                                คำตอบของคุณ: <span className="text-red-500 font-medium">{question.userAnswer}</span>
                               </p>
                             )}
                             <p className="text-sm">
-                              Correct answer: <span className="text-green-500 font-medium">{question.correctAnswer}</span>
+                              คำตอบที่ถูก: <span className="text-green-500 font-medium">{question.correctAnswer}</span>
                             </p>
                           </div>
                         </div>
