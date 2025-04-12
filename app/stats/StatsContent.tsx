@@ -98,6 +98,60 @@ export default function StatsContent() {
           </CardContent>
         </Card>
       </div>
+
+      <Tabs defaultValue="history" className="mt-6">
+        <TabsList>
+          <TabsTrigger value="history">Quiz History</TabsTrigger>
+          <TabsTrigger value="progress">Progress</TabsTrigger>
+        </TabsList>
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Quizzes for {userName}</CardTitle>
+              <CardDescription>Your quiz history and performance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {quizHistory.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">
+                  No quiz history yet. Complete some quizzes to see your stats!
+                </p>
+              ) : (
+                <div className="space-y-8">
+                  {quizHistory.map((quiz, index) => (
+                    <div key={index} className="flex items-center">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
+                        <Calendar className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {quiz.name || "Anonymous"} - {new Date(quiz.created_at).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Score: {quiz.score}/{quiz.total} ({((quiz.score / quiz.total) * 100).toFixed(0)}%)
+                        </p>
+                      </div>
+                      <div className="ml-auto font-medium">
+                        {quiz.time_spent ? `${Math.floor(quiz.time_spent / 60)}:${(quiz.time_spent % 60).toString().padStart(2, "0")}` : "—"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="progress">
+          <Card>
+            <CardHeader>
+              <CardTitle>Learning Progress</CardTitle>
+              <CardDescription>Track your vocabulary learning progress</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px] flex items-center justify-center">
+              <p className="text-muted-foreground">Progress chart will be displayed here in a future update</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
