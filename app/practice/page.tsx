@@ -41,7 +41,7 @@ export default function PracticePage() {
   }
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-12">
+    <div className="container flex items-center justify-center py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -133,4 +133,3 @@ export default function PracticePage() {
     </div>
   )
 }
-

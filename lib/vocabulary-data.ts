@@ -98,4 +98,3 @@ export const vocabularyData: VocabularyItem[] = [
   },
   // Note: This is a subset of the data. In a real application, you would import all vocabulary items
 ]
-

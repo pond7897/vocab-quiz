@@ -31,7 +31,7 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-12">
+    <div className="container flex items-center justify-center py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 bg-primary/10 p-3 rounded-full w-16 h-16 flex items-center justify-center">
@@ -72,4 +72,3 @@ export default function ResultsPage() {
     </div>
   )
 }
-

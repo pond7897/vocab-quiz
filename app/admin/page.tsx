@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,11 +8,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { vocabularyData } from "@/lib/vocabulary-data"
-import { Pencil, Trash, Plus, ArrowLeft } from "lucide-react"
+import { Pencil, Trash, Plus, ArrowLeft, Loader2 } from "lucide-react"
+import { SeedButton } from "@/components/admin/seed-button"
+import { getAllVocabulary } from "@/lib/vocabulary-service"
+import { supabase } from "@/lib/supabase"
+import type { Vocabulary } from "@/lib/supabase"
+import { toast } from "@/components/ui/use-toast"
 
 export default function AdminPage() {
-  const [vocabList, setVocabList] = useState(vocabularyData)
+  const [vocabList, setVocabList] = useState<Vocabulary[]>([])
   const [newWord, setNewWord] = useState("")
   const [newPartOfSpeech, setNewPartOfSpeech] = useState("")
   const [newTranslation, setNewTranslation] = useState("")
@@ -21,21 +25,53 @@ export default function AdminPage() {
   const [editPartOfSpeech, setEditPartOfSpeech] = useState("")
   const [editTranslation, setEditTranslation] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleAddVocab = () => {
+  useEffect(() => {
+    const fetchVocabulary = async () => {
+      setIsLoading(true)
+      const data = await getAllVocabulary()
+      setVocabList(data)
+      setIsLoading(false)
+    }
+
+    fetchVocabulary()
+  }, [])
+
+  const handleAddVocab = async () => {
     if (!newWord || !newPartOfSpeech || !newTranslation) return
 
     const newVocab = {
-      id: Date.now().toString(),
       word: newWord,
-      partOfSpeech: newPartOfSpeech,
+      part_of_speech: newPartOfSpeech,
       translation: newTranslation,
     }
 
-    setVocabList([...vocabList, newVocab])
-    setNewWord("")
-    setNewPartOfSpeech("")
-    setNewTranslation("")
+    try {
+      const { data, error } = await supabase.from("vocabulary").insert([newVocab]).select()
+
+      if (error) {
+        throw error
+      }
+
+      if (data && data[0]) {
+        setVocabList([...vocabList, data[0]])
+        toast({
+          title: "Success",
+          description: "Vocabulary added successfully",
+        })
+      }
+
+      setNewWord("")
+      setNewPartOfSpeech("")
+      setNewTranslation("")
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add vocabulary",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleEditVocab = (id: string) => {
@@ -44,26 +80,79 @@ export default function AdminPage() {
 
     setEditingId(id)
     setEditWord(vocabToEdit.word)
-    setEditPartOfSpeech(vocabToEdit.partOfSpeech)
+    setEditPartOfSpeech(vocabToEdit.part_of_speech)
     setEditTranslation(vocabToEdit.translation)
   }
 
-  const handleUpdateVocab = () => {
+  const handleUpdateVocab = async () => {
     if (!editingId || !editWord || !editPartOfSpeech || !editTranslation) return
 
-    const updatedVocabList = vocabList.map((vocab) =>
-      vocab.id === editingId
-        ? { ...vocab, word: editWord, partOfSpeech: editPartOfSpeech, translation: editTranslation }
-        : vocab,
-    )
+    try {
+      const { error } = await supabase
+        .from("vocabulary")
+        .update({
+          word: editWord,
+          part_of_speech: editPartOfSpeech,
+          translation: editTranslation,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", editingId)
 
-    setVocabList(updatedVocabList)
-    setEditingId(null)
+      if (error) {
+        throw error
+      }
+
+      // Update local state
+      const updatedVocabList = vocabList.map((vocab) =>
+        vocab.id === editingId
+          ? {
+              ...vocab,
+              word: editWord,
+              part_of_speech: editPartOfSpeech,
+              translation: editTranslation,
+              updated_at: new Date().toISOString(),
+            }
+          : vocab,
+      )
+
+      setVocabList(updatedVocabList)
+      setEditingId(null)
+
+      toast({
+        title: "Success",
+        description: "Vocabulary updated successfully",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update vocabulary",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleDeleteVocab = (id: string) => {
-    const updatedVocabList = vocabList.filter((vocab) => vocab.id !== id)
-    setVocabList(updatedVocabList)
+  const handleDeleteVocab = async (id: string) => {
+    try {
+      const { error } = await supabase.from("vocabulary").delete().eq("id", id)
+
+      if (error) {
+        throw error
+      }
+
+      const updatedVocabList = vocabList.filter((vocab) => vocab.id !== id)
+      setVocabList(updatedVocabList)
+
+      toast({
+        title: "Success",
+        description: "Vocabulary deleted successfully",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete vocabulary",
+        variant: "destructive",
+      })
+    }
   }
 
   const filteredVocabList = vocabList.filter(
@@ -73,7 +162,7 @@ export default function AdminPage() {
   )
 
   return (
-    <div className="container py-10">
+    <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <Link href="/">
@@ -118,12 +207,12 @@ export default function AdminPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="new-translation">Thai Translation</Label>
+                  <Label htmlFor="new-translation">คำในภาษาไทย</Label>
                   <Input
                     id="new-translation"
                     value={newTranslation}
                     onChange={(e) => setNewTranslation(e.target.value)}
-                    placeholder="Enter Thai translation"
+                    placeholder="กรอกคำแปลเป็นภาษาไทย"
                   />
                 </div>
                 <div className="flex items-end">
@@ -136,9 +225,12 @@ export default function AdminPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Vocabulary List</CardTitle>
-              <CardDescription>Manage your vocabulary database</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Vocabulary List</CardTitle>
+                <CardDescription>Manage your vocabulary database</CardDescription>
+              </div>
+              <SeedButton />
             </CardHeader>
             <CardContent>
               <div className="mb-4">
@@ -150,61 +242,74 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>English Word</TableHead>
-                      <TableHead>Part of Speech</TableHead>
-                      <TableHead>Thai Translation</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredVocabList.map((vocab) => (
-                      <TableRow key={vocab.id}>
-                        <TableCell>
-                          {editingId === vocab.id ? (
-                            <Input value={editWord} onChange={(e) => setEditWord(e.target.value)} />
-                          ) : (
-                            vocab.word
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {editingId === vocab.id ? (
-                            <Input value={editPartOfSpeech} onChange={(e) => setEditPartOfSpeech(e.target.value)} />
-                          ) : (
-                            vocab.partOfSpeech
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {editingId === vocab.id ? (
-                            <Input value={editTranslation} onChange={(e) => setEditTranslation(e.target.value)} />
-                          ) : (
-                            vocab.translation
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {editingId === vocab.id ? (
-                            <Button onClick={handleUpdateVocab} size="sm">
-                              Save
-                            </Button>
-                          ) : (
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" size="icon" onClick={() => handleEditVocab(vocab.id)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="destructive" size="icon" onClick={() => handleDeleteVocab(vocab.id)}>
-                                <Trash className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>English Word</TableHead>
+                        <TableHead>Part of Speech</TableHead>
+                        <TableHead>Thai Translation</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredVocabList.map((vocab) => (
+                        <TableRow key={vocab.id}>
+                          <TableCell>
+                            {editingId === vocab.id ? (
+                              <Input value={editWord} onChange={(e) => setEditWord(e.target.value)} />
+                            ) : (
+                              vocab.word
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingId === vocab.id ? (
+                              <Input value={editPartOfSpeech} onChange={(e) => setEditPartOfSpeech(e.target.value)} />
+                            ) : (
+                              vocab.part_of_speech
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingId === vocab.id ? (
+                              <Input value={editTranslation} onChange={(e) => setEditTranslation(e.target.value)} />
+                            ) : (
+                              vocab.translation
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {editingId === vocab.id ? (
+                              <Button onClick={handleUpdateVocab} size="sm">
+                                Save
+                              </Button>
+                            ) : (
+                              <div className="flex justify-end gap-2">
+                                <Button variant="outline" size="icon" onClick={() => handleEditVocab(vocab.id)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="destructive" size="icon" onClick={() => handleDeleteVocab(vocab.id)}>
+                                  <Trash className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {filteredVocabList.length === 0 && !isLoading && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-4">
+                            ไม่มีคำศัพท์ในฐานข้อมูล
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -236,4 +341,3 @@ export default function AdminPage() {
     </div>
   )
 }
-
