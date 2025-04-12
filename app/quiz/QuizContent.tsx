@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -10,6 +10,7 @@ import { CheckCircle, XCircle } from "lucide-react"
 
 export default function QuizPage() {
   const router = useRouter()
+  const wordCount = parseInt(useSearchParams().get("words") || "10", 10)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
@@ -27,7 +28,7 @@ export default function QuizPage() {
     // Prepare quiz questions
     const prepareQuiz = () => {
       // Shuffle vocabulary data and take first 10 items
-      const shuffledVocab = [...vocabularyData].sort(() => Math.random() - 0.5).slice(0, 10)
+      const shuffledVocab = [...vocabularyData].sort(() => Math.random() - 0.5).slice(0, wordCount)
 
       const preparedQuestions = shuffledVocab.map((item) => {
         // Get 3 random incorrect options

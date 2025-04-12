@@ -3,11 +3,12 @@
 import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 
 export default function Home() {
   const [name, setName] = useState("")
+  const [wordCount, setWordCount] = useState("")
 
   return (
     <div className="container flex flex-col items-center justify-center py-20 space-y-8 mx-auto">
@@ -21,7 +22,8 @@ export default function Home() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Start Learning</CardTitle>
-          <CardDescription>Enter your name to begin</CardDescription>
+          <CardDescription>กรอกชื่อของคุณ</CardDescription>
+          <CardDescription>กรอกจำนวนคำที่ต้องการเล่น</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -29,9 +31,19 @@ export default function Home() {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
+          <Input
+            type="number"
+            placeholder="Enter number of words"
+            value={wordCount}
+            onChange={(e) => setWordCount(e.target.value)}
+            min="1"
+          />
           <div className="grid gap-4">
-            <Link href={name ? `/quiz?name=${encodeURIComponent(name)}` : "#"} className="w-full">
-              <Button className="w-full" size="lg" disabled={!name}>
+            <Link
+              href={name && wordCount ? `/quiz?name=${encodeURIComponent(name)}&words=${wordCount}` : "#"}
+              className="w-full"
+            >
+              <Button className="w-full" size="lg" disabled={!name || !wordCount}>
                 เริ่มแบบทดสอบ
               </Button>
             </Link>
@@ -42,14 +54,6 @@ export default function Home() {
             </Link>
           </div>
         </CardContent>
-        {/* <CardFooter className="flex justify-between">
-          <Link href="/admin">
-            <Button variant="ghost">Admin Panel</Button>
-          </Link>
-          <Link href={name ? `/stats?name=${encodeURIComponent(name)}` : "#"}>
-            <Button variant="ghost" disabled={!name}>View Stats</Button>
-          </Link>
-        </CardFooter> */}
       </Card>
     </div>
   )
