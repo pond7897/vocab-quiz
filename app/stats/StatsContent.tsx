@@ -8,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, BarChart3, Calendar, Clock, Trophy, Loader2 } from "lucide-react"
 import { getQuizHistory } from "@/lib/vocabulary-service"
 import type { QuizResult } from "@/lib/supabase"
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from "recharts"
+
+
 
 export default function StatsContent() {
   const searchParams = useSearchParams()
@@ -32,6 +35,35 @@ export default function StatsContent() {
     fetchStats()
   }, [])
 
+  const progressData = [
+    {date: "2023-10-01", averageScore: 75},
+    {date: "2023-10-02", averageScore: 80},
+    {date: "2023-10-03", averageScore: 85},
+    {date: "2023-10-04", averageScore: 90},
+    {date: "2023-10-05", averageScore: 95},
+    {date: "2023-10-06", averageScore: 100},
+    {date: "2023-10-07", averageScore: 105},
+    {date: "2023-10-08", averageScore: 110},
+    {date: "2023-10-09", averageScore: 115},
+    {date: "2023-10-10", averageScore: 120},
+    
+  ]
+
+  // const progressData = Object.values(
+  //   quizHistory.reduce((acc, quiz) => {
+  //     const date = new Date(quiz.created_at).toLocaleDateString()
+  //     if (!acc[date]) {
+  //       acc[date] = { date, totalScore: 0, count: 0 }
+  //     }
+  //     acc[date].totalScore += quiz.score
+  //     acc[date].count += 1
+  //     return acc
+  //   }, {} as Record<string, { date: string; totalScore: number; count: number }>)
+  // ).map((entry) => ({
+  //   date: entry.date,
+  //   averageScore: entry.totalScore / entry.count,
+  // }))
+
   const averageScore =
     quizHistory.length > 0
       ? quizHistory.reduce((acc, quiz) => acc + (quiz.score / quiz.total) * 100, 0) / quizHistory.length
@@ -40,7 +72,7 @@ export default function StatsContent() {
   const averageTime =
     quizHistory.length > 0 && quizHistory.some((q) => q.time_spent)
       ? quizHistory.reduce((acc, quiz) => acc + (quiz.time_spent || 0), 0) /
-        quizHistory.filter((q) => q.time_spent).length
+      quizHistory.filter((q) => q.time_spent).length
       : 0
 
   // Format time to MM:SS
@@ -146,8 +178,30 @@ export default function StatsContent() {
               <CardTitle>Learning Progress</CardTitle>
               <CardDescription>Track your vocabulary learning progress</CardDescription>
             </CardHeader>
-            <CardContent className="h-[300px] flex items-center justify-center">
-              <p className="text-muted-foreground">Progress chart will be displayed here in a future update</p>
+            <CardContent className="h-[300px]">
+              {progressData.length === 0 ? (
+                <p className="text-muted-foreground text-center">No progress data available</p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    width={500}
+                    height={400}
+                    data={progressData}
+                    margin={{
+                      top: 10,
+                      right: 30,
+                      left: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="averageScore" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

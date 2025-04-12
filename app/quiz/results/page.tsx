@@ -74,10 +74,10 @@ export default function ResultsPage() {
         </CardHeader>
         
         <Tabs defaultValue="summary">
-          <TabsList className="grid w-full grid-cols-2">
+          {/* <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="summary">Summary</TabsTrigger>
             <TabsTrigger value="details">Detailed Answers</TabsTrigger>
-          </TabsList>
+          </TabsList> */}
           
           <TabsContent value="summary">
             <CardContent className="space-y-6">
@@ -98,64 +98,16 @@ export default function ResultsPage() {
                 </div>
                 
                 <div className="bg-muted/50 p-4 rounded-md">
-                  <p className="font-medium mb-2">Quiz Details:</p>
+                  <p className="font-medium mb-2">รายละเอียดแบบทดสอบ:</p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <span>Completion Time:</span>
+                    <span>ใช้เวลาไป:</span>
                     <span className="text-right">{formatTime(time)}</span>
-                    <span>Questions:</span>
+                    <span>คำถามทั้งหมด:</span>
                     <span className="text-right">{total}</span>
-                    <span>Correct Answers:</span>
+                    <span>ตอบถูกทั้งหมด:</span>
                     <span className="text-right">{score}</span>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </TabsContent>
-          
-          <TabsContent value="details">
-            <CardContent>
-              <h3 className="text-lg font-medium mb-4">Question Breakdown</h3>
-              
-              <div className="space-y-4">
-                {quizData.questions.map((question, index) => {
-                  const isCorrect = question.userAnswer === question.correctAnswer
-                  
-                  return (
-                    <div 
-                      key={index}
-                      className={`p-4 rounded-md border ${
-                        isCorrect ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1">
-                          {isCorrect ? (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium">
-                            คำถามที่ {index + 1}: <span>{question.word}</span>
-                            <span className="text-muted-foreground ml-2">({question.partOfSpeech})</span>
-                          </h4>
-                          
-                          <div className="mt-2 space-y-1">
-                            {!isCorrect && (
-                              <p className="text-sm">
-                                คำตอบของคุณ: <span className="text-red-500 font-medium">{question.userAnswer}</span>
-                              </p>
-                            )}
-                            <p className="text-sm">
-                              คำตอบที่ถูก: <span className="text-green-500 font-medium">{question.correctAnswer}</span>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
               </div>
             </CardContent>
           </TabsContent>
@@ -165,13 +117,13 @@ export default function ResultsPage() {
           <Link href={`/quiz?name=${encodeURIComponent(name)}`} className="w-full">
             <Button className="w-full">
               <RotateCcw className="mr-2 h-4 w-4" />
-              Try Again
+              เริ่มใหม่
             </Button>
           </Link>
           <Link href="/" className="w-full">
             <Button variant="outline" className="w-full">
               <Home className="mr-2 h-4 w-4" />
-              Back to Home
+              กลับหน้าหลัก
             </Button>
           </Link>
         </CardFooter>
