@@ -28,11 +28,12 @@ export async function getRandomVocabulary(limit = 10): Promise<Vocabulary[]> {
   return shuffled.slice(0, limit)
 }
 
-export async function saveQuizResult(score: number, total: number, timeSpent?: number) {
+export async function saveQuizResult(score: number, total: number, name: string, timeSpent?: number) {
   const { error } = await supabase.from("quiz_results").insert([
     {
       score,
       total,
+      name: name,
       time_spent: timeSpent,
     },
   ])
@@ -45,12 +46,13 @@ export async function saveQuizResult(score: number, total: number, timeSpent?: n
   return true
 }
 
-export async function updateUserProgress(vocabularyId: string, isCorrect: boolean) {
+export async function updateUserProgress(vocabularyId: string, isCorrect: boolean, name: string) {
   // First, check if a record exists
   const { data, error } = await supabase
     .from("user_progress")
     .select("*")
     .eq("vocabulary_id", vocabularyId)
+    .eq("name", name)
     .maybeSingle()
 
   if (error) {
@@ -78,6 +80,7 @@ export async function updateUserProgress(vocabularyId: string, isCorrect: boolea
     const { error: insertError } = await supabase.from("user_progress").insert([
       {
         vocabulary_id: vocabularyId,
+        name: name,
         correct_count: isCorrect ? 1 : 0,
         incorrect_count: isCorrect ? 0 : 1,
       },

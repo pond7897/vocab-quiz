@@ -20,7 +20,7 @@ export type Vocabulary = {
 
 export type QuizResult = {
   id: string
-  user_id: string | null
+  name: string // Changed from user_id
   score: number
   total: number
   time_spent: number | null
@@ -29,7 +29,7 @@ export type QuizResult = {
 
 export type UserProgress = {
   id: string
-  user_id: string | null
+  name: string // Changed from user_id
   vocabulary_id: string
   correct_count: number
   incorrect_count: number

@@ -2,20 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { CheckCircle, XCircle, Loader2 } from "lucide-react"
-import { getRandomVocabulary, saveQuizResult, updateUserProgress } from "@/lib/vocabulary-service"
+import { CheckCircle, XCircle, Loader2, ArrowLeft, ArrowRight } from "lucide-react"
+import { getRandomVocabulary, saveQuizResult } from "@/lib/vocabulary-service"
 
 export default function QuizPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const userName = searchParams.get("name") || "Anonymous"
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
-  const [isAnswered, setIsAnswered] = useState(false)
+  const [userAnswers, setUserAnswers] = useState<{[key: number]: string}>({})
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [startTime, setStartTime] = useState<number>(0)
   const [score, setScore] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const [startTime, setStartTime] = useState<number>(0)
   const [questions, setQuestions] = useState<
     Array<{
       id: string
@@ -74,42 +78,55 @@ export default function QuizPage() {
     prepareQuiz()
   }, [router])
 
-  const handleSelectAnswer = async (answer: string) => {
-    if (isAnswered) return
-
-    setSelectedAnswer(answer)
-    setIsAnswered(true)
-
-    const isCorrect = answer === questions[currentQuestionIndex].correctAnswer
-
-    if (isCorrect) {
-      setScore(score + 1)
-    }
-
-    // Update user progress for this vocabulary item
-    await updateUserProgress(questions[currentQuestionIndex].id, isCorrect)
+  const handleSelectAnswer = (answer: string) => {
+    setUserAnswers({
+      ...userAnswers,
+      [currentQuestionIndex]: answer
+    })
   }
 
-  const handleNextQuestion = async () => {
+  const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
-      setSelectedAnswer(null)
-      setIsAnswered(false)
-    } else {
-      // Calculate time spent
-      const timeSpent = Math.floor((Date.now() - startTime) / 1000)
-
-      // Save quiz result
-      await saveQuizResult(score, questions.length, timeSpent)
-
-      // Quiz completed, navigate to results
-      router.push(`/quiz/results?score=${score}&total=${questions.length}&time=${timeSpent}`)
     }
+  }
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1)
+    }
+  }
+
+  const handleSubmitQuiz = async () => {
+    // Calculate score
+    let correctCount = 0;
+    for (let i = 0; i < questions.length; i++) {
+      if (userAnswers[i] === questions[i].correctAnswer) {
+        correctCount++;
+      }
+    }
+    
+    setScore(correctCount);
+    setIsSubmitted(true);
+    
+    // Calculate time spent
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000)
+
+    // Save quiz result with user name
+    await saveQuizResult(correctCount, questions.length, userName, timeSpent)
+  }
+
+  const handleGoToResults = () => {
+    // Calculate time spent
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000)
+    
+    // Navigate to results
+    router.push(`/quiz/results?score=${score}&total=${questions.length}&time=${timeSpent}&name=${encodeURIComponent(userName)}`)
   }
 
   if (isLoading) {
     return (
-      <div className="container flex items-center justify-center py-12">
+      <div className="container flex items-center justify-center py-12 mx-auto">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 flex flex-col items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
@@ -122,7 +139,7 @@ export default function QuizPage() {
 
   if (questions.length === 0) {
     return (
-      <div className="container flex items-center justify-center py-12">
+      <div className="container flex items-center justify-center py-12 mx-auto">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <p className="text-center">No vocabulary found. Please go to Admin Panel and add vocabulary.</p>
@@ -139,7 +156,7 @@ export default function QuizPage() {
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100
 
   return (
-    <div className="container flex flex-col items-center justify-center py-12">
+    <div className="container flex flex-col items-center justify-center py-12 mx-auto">
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -149,9 +166,11 @@ export default function QuizPage() {
                 Question {currentQuestionIndex + 1} of {questions.length}
               </CardDescription>
             </div>
-            <div className="text-right">
-              <p className="font-medium">Score: {score}</p>
-            </div>
+            {isSubmitted && (
+              <div className="text-right">
+                <p className="font-medium">Score: {score}/{questions.length}</p>
+              </div>
+            )}
           </div>
           <Progress value={progress} className="h-2" />
         </CardHeader>
@@ -163,41 +182,95 @@ export default function QuizPage() {
           </div>
 
           <div className="grid gap-3">
-            {currentQuestion.options.map((option, index) => (
-              <Button
-                key={index}
-                variant={
-                  isAnswered
-                    ? option === currentQuestion.correctAnswer
-                      ? "default"
-                      : option === selectedAnswer
-                        ? "destructive"
+            {currentQuestion.options.map((option, index) => {
+              const isSelected = userAnswers[currentQuestionIndex] === option;
+              const isCorrect = option === currentQuestion.correctAnswer;
+              const isWrong = isSubmitted && isSelected && !isCorrect;
+              
+              return (
+                <Button
+                  key={index}
+                  variant={
+                    isSubmitted
+                      ? isCorrect
+                        ? "default"
+                        : isWrong
+                          ? "destructive"
+                          : "outline"
+                      : isSelected
+                        ? "default"
                         : "outline"
-                    : "outline"
-                }
-                className={`justify-start h-auto py-4 px-4 text-left ${
-                  isAnswered && option === currentQuestion.correctAnswer ? "border-green-500" : ""
-                }`}
-                onClick={() => handleSelectAnswer(option)}
-                disabled={isAnswered}
-              >
-                <div className="flex items-center w-full">
-                  <span className="flex-1">{option}</span>
-                  {isAnswered && option === currentQuestion.correctAnswer && (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  )}
-                  {isAnswered && option === selectedAnswer && option !== currentQuestion.correctAnswer && (
-                    <XCircle className="h-5 w-5 text-red-500" />
-                  )}
-                </div>
-              </Button>
-            ))}
+                  }
+                  className={`justify-start h-auto py-4 px-4 text-left`}
+                  onClick={() => !isSubmitted && handleSelectAnswer(option)}
+                  disabled={isSubmitted}
+                >
+                  <div className="flex items-center w-full">
+                    <span className="flex-1">{option}</span>
+                    {isSubmitted && isCorrect && (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    )}
+                    {isSubmitted && isWrong && (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    )}
+                  </div>
+                </Button>
+              );
+            })}
           </div>
         </CardContent>
-        <CardFooter>
-          <Button className="w-full" onClick={handleNextQuestion} disabled={!isAnswered}>
-            {currentQuestionIndex < questions.length - 1 ? "Next Question" : "See Results"}
-          </Button>
+        <CardFooter className="flex justify-between">
+          {!isSubmitted ? (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={handlePreviousQuestion} 
+                disabled={currentQuestionIndex === 0}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+              </Button>
+              
+              {currentQuestionIndex < questions.length - 1 ? (
+                <Button 
+                  onClick={handleNextQuestion} 
+                  disabled={!userAnswers[currentQuestionIndex]}
+                >
+                  Next <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleSubmitQuiz} 
+                  disabled={!userAnswers[currentQuestionIndex]}
+                >
+                  Submit Quiz
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={handlePreviousQuestion} 
+                disabled={currentQuestionIndex === 0}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+              </Button>
+              
+              {currentQuestionIndex < questions.length - 1 ? (
+                <Button 
+                  onClick={handleNextQuestion}
+                >
+                  Next <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleGoToResults}
+                >
+                  See Results
+                </Button>
+              )}
+            </>
+          )}
         </CardFooter>
       </Card>
     </div>

@@ -30,12 +30,12 @@ export default function Home() {
             onChange={(e) => setName(e.target.value)}
           />
           <div className="grid gap-4">
-            <Link href={`/quiz?name=${encodeURIComponent(name)}`} className="w-full">
+            <Link href={name ? `/quiz?name=${encodeURIComponent(name)}` : "#"} className="w-full">
               <Button className="w-full" size="lg" disabled={!name}>
                 เริ่มแบบทดสอบ
               </Button>
             </Link>
-            <Link href={`/practice?name=${encodeURIComponent(name)}`} className="w-full">
+            <Link href={name ? `/practice?name=${encodeURIComponent(name)}` : "#"} className="w-full">
               <Button variant="outline" className="w-full" size="lg" disabled={!name}>
                 โหมดฝึกฝน
               </Button>
@@ -43,10 +43,10 @@ export default function Home() {
           </div>
         </CardContent>
         {/* <CardFooter className="flex justify-between">
-          <Link href={`/admin?name=${encodeURIComponent(name)}`}>
-            <Button variant="ghost" disabled={!name}>Admin Panel</Button>
+          <Link href="/admin">
+            <Button variant="ghost">Admin Panel</Button>
           </Link>
-          <Link href={`/stats?name=${encodeURIComponent(name)}`}>
+          <Link href={name ? `/stats?name=${encodeURIComponent(name)}` : "#"}>
             <Button variant="ghost" disabled={!name}>View Stats</Button>
           </Link>
         </CardFooter> */}

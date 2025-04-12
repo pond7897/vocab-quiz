@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,6 +11,9 @@ import { getQuizHistory } from "@/lib/vocabulary-service"
 import type { QuizResult } from "@/lib/supabase"
 
 export default function StatsPage() {
+  const searchParams = useSearchParams()
+  const userName = searchParams.get("name") || "Anonymous"
+  
   const [quizHistory, setQuizHistory] = useState<QuizResult[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -17,7 +21,7 @@ export default function StatsPage() {
     const fetchStats = async () => {
       setIsLoading(true)
       try {
-        const history = await getQuizHistory()
+        const history = await getQuizHistory() // ดึงข้อมูลทุกคน
         setQuizHistory(history)
       } catch (error) {
         console.error("Error fetching stats:", error)
@@ -56,7 +60,7 @@ export default function StatsPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold">Your Statistics</h1>
+          <h1 className="text-3xl font-bold">Statistics</h1>
         </div>
 
         <div className="flex justify-center items-center h-64">
@@ -74,7 +78,7 @@ export default function StatsPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold">Your Statistics</h1>
+        <h1 className="text-3xl font-bold">All Players' Statistics</h1>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -118,7 +122,7 @@ export default function StatsPage() {
         <TabsContent value="history">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Quizzes</CardTitle>
+              <CardTitle>Recent Quizzes for {userName}</CardTitle>
               <CardDescription>Your quiz history and performance</CardDescription>
             </CardHeader>
             <CardContent>
@@ -135,13 +139,15 @@ export default function StatsPage() {
                       </div>
                       <div className="ml-4 space-y-1">
                         <p className="text-sm font-medium leading-none">
-                          Quiz on {new Date(quiz.created_at).toLocaleDateString()}
+                          {quiz.name || "Anonymous"} - {new Date(quiz.created_at).toLocaleDateString()}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Score: {quiz.score}/{quiz.total} ({((quiz.score / quiz.total) * 100).toFixed(0)}%)
                         </p>
                       </div>
-                      <div className="ml-auto font-medium">{quiz.time_spent ? formatTime(quiz.time_spent) : "—"}</div>
+                      <div className="ml-auto font-medium">
+                        {quiz.time_spent ? `${Math.floor(quiz.time_spent / 60)}:${(quiz.time_spent % 60).toString().padStart(2, "0")}` : "—"}
+                      </div>
                     </div>
                   ))}
                 </div>
