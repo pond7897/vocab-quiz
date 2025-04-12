@@ -120,8 +120,18 @@ export default function QuizPage() {
     // Calculate time spent
     const timeSpent = Math.floor((Date.now() - startTime) / 1000)
     
-    // Navigate to results
-    router.push(`/quiz/results?score=${score}&total=${questions.length}&time=${timeSpent}&name=${encodeURIComponent(userName)}`)
+    // Prepare quiz data to pass to results page
+    const quizData = {
+      questions: questions.map((q, index) => ({
+        word: q.word,
+        partOfSpeech: q.partOfSpeech,
+        correctAnswer: q.correctAnswer,
+        userAnswer: userAnswers[index] || ""
+      }))
+    }
+    
+    // Navigate to results with quiz data
+    router.push(`/quiz/results?score=${score}&total=${questions.length}&time=${timeSpent}&name=${encodeURIComponent(userName)}&quizData=${encodeURIComponent(JSON.stringify(quizData))}`)
   }
 
   if (isLoading) {
