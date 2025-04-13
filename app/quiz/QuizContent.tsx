@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { vocabularyData } from "@/lib/vocabulary-data"
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
 import Link from "next/link"
+import { getAllVocabulary } from "@/lib/vocabulary-service" // Import the Supabase query
+import type { Vocabulary } from "@/lib/supabase" // Import the Vocabulary type
 
 export default function QuizPage() {
   const router = useRouter()
@@ -28,40 +29,52 @@ export default function QuizPage() {
   >([])
   const [isError, setIsError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(true) // Add loading state
 
   useEffect(() => {
-    // Prepare quiz questions
-    const prepareQuiz = () => {
-      // Check if wordCount is more than available vocabulary
-      if (wordCount > vocabularyData.length) {
-        setIsError(true)
-        setErrorMessage(`ไม่สามารถใส่เลขนี้ได้เนื่องจากคำในคลังมีทั้งหมดแค่ ${vocabularyData.length} คำ`)
-        return
-      }
+    // Prepare quiz questions by fetching from Supabase
+    const prepareQuiz = async () => {
+      try {
+        setIsLoading(true)
+        // Fetch vocabulary data from Supabase
+        const vocabularyData = await getAllVocabulary()
 
-      // Shuffle vocabulary data and take first n items based on wordCount
-      const shuffledVocab = [...vocabularyData].sort(() => Math.random() - 0.5).slice(0, wordCount)
-
-      const preparedQuestions = shuffledVocab.map((item) => {
-        // Get 3 random incorrect options
-        const incorrectOptions = vocabularyData
-          .filter((vocabItem) => vocabItem.translation !== item.translation)
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3)
-          .map((vocabItem) => vocabItem.translation)
-
-        // Combine correct and incorrect options and shuffle
-        const options = [item.translation, ...incorrectOptions].sort(() => Math.random() - 0.5)
-
-        return {
-          word: item.word,
-          partOfSpeech: item.partOfSpeech,
-          correctAnswer: item.translation,
-          options,
+        // Check if wordCount is more than available vocabulary
+        if (wordCount > vocabularyData.length) {
+          setIsError(true)
+          setErrorMessage(`ไม่สามารถใส่เลขนี้ได้เนื่องจากคำในคลังมีทั้งหมดแค่ ${vocabularyData.length} คำ`)
+          return
         }
-      })
 
-      setQuestions(preparedQuestions)
+        // Shuffle vocabulary data and take first n items based on wordCount
+        const shuffledVocab = [...vocabularyData].sort(() => Math.random() - 0.5).slice(0, wordCount)
+
+        const preparedQuestions = shuffledVocab.map((item) => {
+          // Get 3 random incorrect options
+          const incorrectOptions = vocabularyData
+            .filter((vocabItem) => vocabItem.translation !== item.translation)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3)
+            .map((vocabItem) => vocabItem.translation)
+
+          // Combine correct and incorrect options and shuffle
+          const options = [item.translation, ...incorrectOptions].sort(() => Math.random() - 0.5)
+
+          return {
+            word: item.word,
+            partOfSpeech: item.part_of_speech, // Use part_of_speech from Supabase
+            correctAnswer: item.translation,
+            options,
+          }
+        })
+
+        setQuestions(preparedQuestions)
+      } catch (error) {
+        setIsError(true)
+        setErrorMessage("เกิดข้อผิดพลาดในการโหลดข้อมูลคำศัพท์")
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     prepareQuiz()
@@ -112,9 +125,9 @@ export default function QuizPage() {
     )
   }
 
-  if (questions.length === 0) {
+  if (isLoading || questions.length === 0) {
     return (
-      <div className="container flex items-center justify-center min-h-screen">
+      <div className="container flex items-center justify-center min-h-screen mx-auto">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <p className="text-center">กำลังโหลดคำถาม...</p>
