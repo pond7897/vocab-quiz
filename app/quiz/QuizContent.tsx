@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { vocabularyData } from "@/lib/vocabulary-data"
-import { CheckCircle, XCircle } from "lucide-react"
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
+import Link from "next/link"
 
 export default function QuizPage() {
   const router = useRouter()
-  const wordCount = parseInt(useSearchParams().get("words") || "10", 10)
+  const searchParams = useSearchParams()
+  const wordCount = parseInt(searchParams.get("words") || "10", 10)
+  const userName = searchParams.get("name") || "Anonymous"
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
@@ -23,11 +26,20 @@ export default function QuizPage() {
       options: string[]
     }>
   >([])
+  const [isError, setIsError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     // Prepare quiz questions
     const prepareQuiz = () => {
-      // Shuffle vocabulary data and take first 10 items
+      // Check if wordCount is more than available vocabulary
+      if (wordCount > vocabularyData.length) {
+        setIsError(true)
+        setErrorMessage(`ไม่สามารถใส่เลขนี้ได้เนื่องจากคำในคลังมีทั้งหมดแค่ ${vocabularyData.length} คำ`)
+        return
+      }
+
+      // Shuffle vocabulary data and take first n items based on wordCount
       const shuffledVocab = [...vocabularyData].sort(() => Math.random() - 0.5).slice(0, wordCount)
 
       const preparedQuestions = shuffledVocab.map((item) => {
@@ -53,7 +65,7 @@ export default function QuizPage() {
     }
 
     prepareQuiz()
-  }, [])
+  }, [wordCount])
 
   const handleSelectAnswer = (answer: string) => {
     if (isAnswered) return
@@ -77,12 +89,35 @@ export default function QuizPage() {
     }
   }
 
+  if (isError) {
+    return (
+      <div className="container flex items-center justify-center min-h-screen mx-auto">
+        <Card className="w-full max-w-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl text-center">เกิดข้อผิดพลาด</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 pb-2">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <AlertTriangle className="h-12 w-12 text-amber-500" />
+              <p className="text-center">{errorMessage}</p>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-center pt-2">
+            <Link href="/">
+              <Button>กลับหน้าหลัก</Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
+    )
+  }
+
   if (questions.length === 0) {
     return (
       <div className="container flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
-            <p className="text-center">Loading quiz questions...</p>
+            <p className="text-center">กำลังโหลดคำถาม...</p>
           </CardContent>
         </Card>
       </div>
@@ -157,4 +192,3 @@ export default function QuizPage() {
     </div>
   )
 }
-

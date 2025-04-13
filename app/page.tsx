@@ -22,18 +22,19 @@ export default function Home() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Start Learning</CardTitle>
-          <CardDescription>กรอกชื่อของคุณ</CardDescription>
-          <CardDescription>กรอกจำนวนคำที่ต้องการเล่น</CardDescription>
+          <CardDescription>กรอกชื่อและจำนวนคำที่ต้องการเล่น</CardDescription>
+          {/* <CardDescription>กรอกชื่อของคุณ</CardDescription>
+          <CardDescription>กรอกจำนวนคำที่ต้องการเล่น</CardDescription> */}
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
-            placeholder="Enter your name"
+            placeholder="กรอกชื่อของคุณ"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <Input
             type="number"
-            placeholder="Enter number of words"
+            placeholder="กรอกจำนวนคำที่ต้องการเล่น"
             value={wordCount}
             onChange={(e) => setWordCount(e.target.value)}
             min="1"
